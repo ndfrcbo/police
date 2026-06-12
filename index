@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Service">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>Journal de service</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0f0f1a;
+      --bg2: #1a1a2e;
+      --bg3: #16213e;
+      --card: #1e1e35;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --text: #f0f0f0;
+      --text2: #9090a8;
+      --text3: #5a5a78;
+      --blue: #4a9eff;
+      --blue-bg: rgba(74,158,255,0.12);
+      --green: #4ade80;
+      --green-bg: rgba(74,222,128,0.12);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251,191,36,0.12);
+      --red: #f87171;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .screen { display: none; padding: 1.25rem 1rem 6rem; animation: fadeIn 0.2s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+      padding-top: env(safe-area-inset-top, 12px);
+    }
+    .header-icon {
+      width: 38px; height: 38px;
+      background: var(--blue-bg);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; color: var(--text); flex: 1; }
+    .badge {
+      font-size: 12px; font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 10px;
+    }
+    .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin-bottom: 4px; }
+    .card-value { font-size: 16px; font-weight: 500; color: var(--text); }
+
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text3);
+      margin: 1.25rem 0 0.6rem;
+    }
+
+    .indicatif-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .indicatif-btn {
+      padding: 11px 6px;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .indicatif-btn.selected {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border-color: rgba(74,158,255,0.3);
+    }
+
+    .input-group { margin-bottom: 1rem; }
+    .input-label { font-size: 13px; color: var(--text2); margin-bottom: 6px; display: block; }
+    input[type=text], input[type=time], textarea, select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 0.5px solid var(--border2);
+      border-radius: 10px;
+      font-size: 16px;
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type=text]:focus, input[type=time]:focus, textarea:focus {
+      border-color: var(--blue);
+    }
+    textarea { resize: none; height: 76px; }
+
+    .tph-neo { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--text2);
+      border: 0.5px solid var(--border2);
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .motif-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .motif-btn {
+      padding: 10px 8px;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      font-size: 13px;
+      color: var(--text2);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      line-height: 1.3;
+    }
+    .motif-btn.selected {
+      background: var(--green-bg);
+      color: var(--green);
+      border-color: rgba(74,222,128,0.3);
+    }
+
+    .mission-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .mission-number {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+    .mission-time {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .mission-addr {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .mission-objet {
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .mission-delete {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text3);
+      font-size: 14px;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--blue);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 1.25rem;
+      font-family: inherit;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row-label { color: var(--text2); }
+    .info-row-value { color: var(--text); font-weight: 500; }
+
+    .bottom-safe { height: env(safe-area-inset-bottom, 20px); }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--green);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    .export-box {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 13px;
+      color: var(--text2);
+      white-space: pre-wrap;
+      line-height: 1.8;
+      font-family: 'SF Mono', monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      flex: 1;
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem;
+      text-align: center;
+    }
+    .stat-num { font-size: 24px; font-weight: 700; color: var(--blue); }
+    .stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ÉCRAN INIT : nouveau service -->
+<div id="screen-init" class="screen active">
+  <div class="header">
+    <div class="header-icon">🛡️</div>
+    <h1>Nouveau service</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Date</div>
+    <div class="card-value" id="date-display"></div>
+  </div>
+
+  <div class="section-label">Indicatif d'équipage</div>
+  <div class="indicatif-grid" id="indicatif-grid"></div>
+
+  <div class="section-label">Informations radio</div>
+  <div class="tph-neo">
+    <div class="input-group" style="margin-bottom:0">
+      <label class="input-label">Numéro TPH</label>
+      <input type="text" id="tph-input" placeholder="ex: 4521" inputmode="numeric">
+    </div>
+    <div class="input-group" style="margin-bottom:0">
+      <label class="input-label">Numéro NEO</label>
+      <input type="text" id="neo-input" placeholder="ex: 1234" inputmode="numeric">
+    </div>
+  </div>
+
+  <button class="btn-primary" style="margin-top:1.5rem" onclick="startService()">
+    Démarrer le service
+  </button>
+</div>
+
+<!-- ÉCRAN ACCUEIL -->
+<div id="screen-home" class="screen">
+  <div class="header">
+    <div class="header-icon">🛡️</div>
+    <div style="flex:1">
+      <h1 id="home-indicatif">—</h1>
+      <div style="font-size:12px; color:var(--text2)" id="home-date"></div>
+    </div>
+    <span class="badge" id="mission-count">0 mission</span>
+  </div>
+
+  <div class="tph-neo" style="margin-bottom:1rem">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-label">📞 TPH</div>
+      <div class="card-value" id="home-tph">—</div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-label">📱 NEO</div>
+      <div class="card-value" id="home-neo">—</div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="showScreen('screen-mission')">
+    + Nouvelle mission
+  </button>
+  <button class="btn-secondary" onclick="showScreen('screen-export')">
+    Récapitulatif du service
+  </button>
+
+  <div class="section-label">Missions du jour</div>
+  <div id="missions-list"></div>
+  <div class="bottom-safe"></div>
+</div>
+
+<!-- ÉCRAN NOUVELLE MISSION -->
+<div id="screen-mission" class="screen">
+  <button class="back-btn" onclick="showScreen('screen-home')">
+    ← Retour
+  </button>
+  <div class="header" style="margin-bottom:1rem">
+    <div class="header-icon">📻</div>
+    <h1>Nouvelle mission</h1>
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">Heure d'appel</label>
+    <input type="time" id="heure-input">
+  </div>
+
+  <div class="input-group">
+    <label class="input-label">Adresse</label>
+    <input type="text" id="adresse-input" placeholder="Numéro, rue, commune" autocomplete="off">
+  </div>
+
+  <div class="section-label">Objet de la mission</div>
+  <div class="motif-grid" id="motif-grid"></div>
+
+  <div class="input-group">
+    <label class="input-label">Précision / autre motif</label>
+    <textarea id="objet-input" placeholder="Précisez si besoin..."></textarea>
+  </div>
+
+  <button class="btn-primary" onclick="saveMission()">Enregistrer</button>
+  <button class="btn-secondary" onclick="showScreen('screen-home')">Annuler</button>
+  <div class="bottom-safe"></div>
+</div>
+
+<!-- ÉCRAN RÉCAPITULATIF -->
+<div id="screen-export" class="screen">
+  <button class="back-btn" onclick="showScreen('screen-home')">
+    ← Retour
+  </button>
+  <div class="header" style="margin-bottom:1rem">
+    <div class="header-icon">📋</div>
+    <h1>Récapitulatif</h1>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-missions">0</div>
+      <div class="stat-label">missions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-heure">—</div>
+      <div class="stat-label">première mission</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="info-row">
+      <span class="info-row-label">Date</span>
+      <span class="info-row-value" id="recap-date">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">Indicatif</span>
+      <span class="info-row-value" id="recap-indicatif">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">TPH</span>
+      <span class="info-row-value" id="recap-tph">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-row-label">NEO</span>
+      <span class="info-row-value" id="recap-neo">—</span>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="copyRecap()">📋 Copier le récapitulatif</button>
+  <button class="btn-secondary" onclick="confirmReset()">🔄 Nouveau service</button>
+
+  <div class="export-box" id="export-box"></div>
+  <div class="bottom-safe"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const INDICATIFS = ['PS 110 A','PS 110 B','PS 110 C','PS 110 D','PS 110 E','PS 110 F','PS 110 G','PS 110 H','PS 110 J'];
+const MOTIFS = ['Tapage nocturne','Différend voisins','Personne suspecte','Accident route','Violences','Ivresse publique','Vol / cambriolage','Fugue / disparition','Contrôle judiciaire','Intervention sociale'];
+
+let state = { indicatif: null, tph: '', neo: '', date: '', dateKey: '', missions: [] };
+
+function fmt(d) {
+  return d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function dateKey(d) {
+  return d.toISOString().slice(0,10);
+}
+function nowTime() {
+  const n = new Date();
+  return String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+
+function saveToStorage() {
+  localStorage.setItem('journal_service', JSON.stringify(state));
+}
+
+function loadFromStorage() {
+  const raw = localStorage.getItem('journal_service');
+  if (!raw) return false;
+  try {
+    const saved = JSON.parse(raw);
+    const today = dateKey(new Date());
+    if (saved.dateKey === today) {
+      state = saved;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function init() {
+  const today = new Date();
+  state.date = fmt(today);
+  state.dateKey = dateKey(today);
+  document.getElementById('date-display').textContent = state.date;
+
+  const grid = document.getElementById('indicatif-grid');
+  INDICATIFS.forEach(ind => {
+    const b = document.createElement('button');
+    b.className = 'indicatif-btn';
+    b.textContent = ind;
+    b.onclick = () => {
+      document.querySelectorAll('.indicatif-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      state.indicatif = ind;
+    };
+    grid.appendChild(b);
+  });
+
+  const motifGrid = document.getElementById('motif-grid');
+  MOTIFS.forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'motif-btn';
+    b.textContent = m;
+    b.onclick = () => {
+      document.querySelectorAll('.motif-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+    };
+    motifGrid.appendChild(b);
+  });
+
+  if (loadFromStorage()) {
+    goHome();
+  }
+}
+
+function startService() {
+  if (!state.indicatif) { showToast('Sélectionnez un indicatif ⚠️'); return; }
+  state.tph = document.getElementById('tph-input').value.trim() || '—';
+  state.neo = document.getElementById('neo-input').value.trim() || '—';
+  saveToStorage();
+  goHome();
+}
+
+function goHome() {
+  document.getElementById('home-indicatif').textContent = state.indicatif;
+  document.getElementById('home-date').textContent = state.date;
+  document.getElementById('home-tph').textContent = state.tph;
+  document.getElementById('home-neo').textContent = state.neo;
+  renderMissions();
+  showScreen('screen-home');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-mission') {
+    document.getElementById('heure-input').value = nowTime();
+    document.getElementById('adresse-input').value = '';
+    document.getElementById('objet-input').value = '';
+    document.querySelectorAll('.motif-btn').forEach(x => x.classList.remove('selected'));
+  }
+  if (id === 'screen-export') renderExport();
+  window.scrollTo(0, 0);
+}
+
+function saveMission() {
+  const heure = document.getElementById('heure-input').value;
+  const adresse = document.getElementById('adresse-input').value.trim();
+  const selected = document.querySelector('.motif-btn.selected');
+  const precis = document.getElementById('objet-input').value.trim();
+  const objet = precis || (selected ? selected.textContent : '');
+
+  if (!adresse) { showToast('Adresse requise ⚠️'); return; }
+  if (!objet) { showToast('Objet requis ⚠️'); return; }
+
+  state.missions.push({ heure, adresse, objet });
+  saveToStorage();
+  renderMissions();
+  showToast('Mission enregistrée ✓');
+  showScreen('screen-home');
+}
+
+function deleteMission(i) {
+  if (!confirm('Supprimer cette mission ?')) return;
+  state.missions.splice(i, 1);
+  saveToStorage();
+  renderMissions();
+}
+
+function renderMissions() {
+  const list = document.getElementById('missions-list');
+  const count = state.missions.length;
+  document.getElementById('mission-count').textContent = count + ' mission' + (count > 1 ? 's' : '');
+
+  if (count === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>Aucune mission pour le moment</div>';
+    return;
+  }
+
+  list.innerHTML = state.missions.map((m, i) => `
+    <div class="mission-card">
+      <div class="mission-number">Mission ${i + 1}</div>
+      <div class="mission-time">🕐 ${m.heure}</div>
+      <div class="mission-addr">📍 ${m.adresse}</div>
+      <div class="mission-objet">${m.objet}</div>
+      <button class="mission-delete" onclick="deleteMission(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderExport() {
+  document.getElementById('recap-date').textContent = state.date;
+  document.getElementById('recap-indicatif').textContent = state.indicatif || '—';
+  document.getElementById('recap-tph').textContent = state.tph || '—';
+  document.getElementById('recap-neo').textContent = state.neo || '—';
+  document.getElementById('stat-missions').textContent = state.missions.length;
+  document.getElementById('stat-heure').textContent = state.missions.length ? state.missions[0].heure : '—';
+
+  const lines = [
+    '=== JOURNAL DE SERVICE ===',
+    state.date.toUpperCase(),
+    '',
+    'Indicatif : ' + (state.indicatif || '—'),
+    'TPH       : ' + (state.tph || '—'),
+    'NEO       : ' + (state.neo || '—'),
+    '',
+    '--- MISSIONS (' + state.missions.length + ') ---',
+    ''
+  ];
+  state.missions.forEach((m, i) => {
+    lines.push('Mission ' + (i + 1));
+    lines.push('Heure   : ' + m.heure);
+    lines.push('Adresse : ' + m.adresse);
+    lines.push('Objet   : ' + m.objet);
+    lines.push('');
+  });
+  document.getElementById('export-box').textContent = lines.join('\n');
+}
+
+function copyRecap() {
+  const text = document.getElementById('export-box').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copié ✓'));
+}
+
+function confirmReset() {
+  if (!confirm('Démarrer un nouveau service ? Les données actuelles seront effacées.')) return;
+  localStorage.removeItem('journal_service');
+  state = { indicatif: null, tph: '', neo: '', date: '', dateKey: '', missions: [] };
+  document.querySelectorAll('.indicatif-btn').forEach(x => x.classList.remove('selected'));
+  document.getElementById('tph-input').value = '';
+  document.getElementById('neo-input').value = '';
+  const today = new Date();
+  state.date = fmt(today);
+  state.dateKey = dateKey(today);
+  document.getElementById('date-display').textContent = state.date;
+  showScreen('screen-init');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+init();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
